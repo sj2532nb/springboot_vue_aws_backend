@@ -26,14 +26,14 @@ public class JwtProvider {
         );
     }
 
-    public String createToken(Long userId, String email) {
-
+    public String createToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .claim("email", email)
+                .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

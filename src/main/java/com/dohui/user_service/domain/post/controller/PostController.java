@@ -1,5 +1,6 @@
-package com.dohui.user_service.domain.post;
+package com.dohui.user_service.domain.post.controller;
 
+import com.dohui.user_service.domain.post.service.PostService;
 import com.dohui.user_service.domain.post.dto.request.PostRequest;
 import com.dohui.user_service.domain.post.dto.response.PostDetailResponse;
 import com.dohui.user_service.domain.post.dto.response.PostResponse;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +30,13 @@ public class PostController {
             Authentication authentication
     ) {
         Long userId = Long.valueOf(authentication.getName());
-        return postService.create(userId, request.getTitle(), request.getContent());
+        return postService.create(
+                userId,
+                request.getTitle(),
+                request.getContent(),
+                request.getFileNames(),
+                request.getFileUrls()
+        );
     }
 
     // 글 목록
@@ -67,18 +76,24 @@ public class PostController {
             Authentication authentication
     ) {
         Long userId = Long.valueOf(authentication.getName());
-        postService.update(id, userId, request.getTitle(), request.getContent());
+        postService.update(
+                id,
+                userId,
+                request.getTitle(),
+                request.getContent(),
+                request.getFileNames(),
+                request.getFileUrls()
+        );
     }
 
     // 글 삭제
     @DeleteMapping("/{id}")
     public void delete(
-            @PathVariable
-            Long id,
+            @PathVariable Long id,
             Authentication authentication
     ) {
         Long userId = Long.valueOf(authentication.getName());
-        postService.delete(id, userId);
+        postService.delete(id, userId, authentication);
     }
 
     // 추천 추가
@@ -118,5 +133,30 @@ public class PostController {
     ){
         Long uid = userId != null ? Long.valueOf(userId) : null;
         return postService.getHotPosts(threshold, pageable, uid);
+    }
+
+    // 내가 쓴 글 목록
+    @GetMapping("/me")
+    public Page<PostResponse> getMyPosts(
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            Authentication authentication
+    ){
+        Long userId = Long.valueOf(authentication.getName());
+        return postService.getMyPosts(userId, pageable);
+    }
+
+    // 이전 글 목록
+    @GetMapping("/{id}/previous")
+    public List<PostResponse> getPreviousPosts(
+            @PathVariable("id") Long postId,
+            @RequestParam(required = false) String from,
+            Authentication authentication
+    ){
+        Long userId = null;
+        if (authentication != null){
+            userId = Long.valueOf(authentication.getName());
+        }
+        return postService.getPreviousPosts(postId, userId, from);
     }
 }

@@ -3,8 +3,13 @@ package com.dohui.user_service.domain.comment;
 import com.dohui.user_service.domain.comment.dto.CommentRequest;
 import com.dohui.user_service.domain.comment.dto.response.CommentPageResponse;
 import com.dohui.user_service.domain.comment.dto.response.CommentResponse;
+import com.dohui.user_service.domain.comment.dto.response.MyCommentResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +24,7 @@ public class CommentController {
     public Long create(
             @PathVariable
             Long postId,
-            @RequestBody CommentRequest request,
+            @RequestBody @Valid CommentRequest request,
             Authentication authentication
     ){
         Long userId = Long.valueOf(authentication.getName());
@@ -43,6 +48,7 @@ public class CommentController {
             @PathVariable
             Long commentId,
             @RequestBody
+            @Valid
             CommentRequest request,
             Authentication authentication
     ){
@@ -53,11 +59,21 @@ public class CommentController {
     // 댓글 삭제
     @DeleteMapping("/{commentId}")
     public Long delete(
-            @PathVariable
-            Long commentId,
+            @PathVariable Long commentId,
             Authentication authentication
     ){
         Long userId = Long.valueOf(authentication.getName());
-        return commentService.delete(userId, commentId);
+        return commentService.delete(userId, commentId, authentication);
+    }
+
+    // 내가 작성한 댓글 조회
+    @GetMapping("/me")
+    public Page<MyCommentResponse> getMyComments(
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            Authentication authentication
+    ){
+        Long userId = Long.valueOf(authentication.getName());
+        return commentService.getMyComments(userId, pageable);
     }
 }

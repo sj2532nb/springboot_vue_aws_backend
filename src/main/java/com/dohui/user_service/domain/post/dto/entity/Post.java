@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,6 +31,9 @@ public class Post extends BaseEntity {
     private String content;
 
     @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false)
     private int commentCount = 0;
 
     @Column(nullable = false)
@@ -39,11 +45,15 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private boolean deleted = false;
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
+
     @Builder
-    public Post(User user, String title, String content) {
+    public Post(User user, String title, String content, String username) {
         this.user = user;
         this.title = title;
         this.content = content;
+        this.username = username;
         this.commentCount = 0;
     }
 

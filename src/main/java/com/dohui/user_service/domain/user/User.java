@@ -29,7 +29,7 @@ public class User extends BaseEntity {
     private UserRole role;
 
     @Column(nullable = false)
-    private boolean emailVerified;
+    private boolean deleted;
 
     // 회원가입용 생성자
     public User(String email, String password, String nickname){
@@ -37,6 +37,20 @@ public class User extends BaseEntity {
         this.password = password;
         this.nickname = nickname;
         this.role = UserRole.USER;
-        this.emailVerified = false;
+        this.deleted = false;
+    }
+
+    public void updateNickname(String nickname){
+        this.nickname = nickname;
+    }
+
+    public void updatePassword(String password){
+        this.password = password;
+    }
+
+    public void softDelete(){
+        this.deleted = true;
+        this.email = this.email + "_deleted_" + this.id;
+        this.nickname = this.nickname + "_deleted_" + this.id;
     }
 }

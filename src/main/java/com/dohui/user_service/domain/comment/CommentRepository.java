@@ -11,4 +11,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Page<Comment> findByPostIdAndParentIsNull(Long postId, Pageable pageable);
     // 대댓글 조회
     List<Comment> findByParentIdInOrderByIdAsc(List<Long> parentIds);
+    // 내가 작성한 댓글 조회
+    Page<Comment> findByUserIdAndDeletedFalse(Long userId, Pageable pageable);
 }

@@ -2,6 +2,7 @@ package com.dohui.user_service.domain.comment;
 
 import com.dohui.user_service.domain.comment.dto.response.CommentPageResponse;
 import com.dohui.user_service.domain.comment.dto.response.CommentResponse;
+import com.dohui.user_service.domain.comment.dto.response.MyCommentResponse;
 import com.dohui.user_service.domain.post.dto.entity.Post;
 import com.dohui.user_service.domain.post.dto.repository.PostRepository;
 import com.dohui.user_service.domain.user.User;
@@ -9,6 +10,7 @@ import com.dohui.user_service.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +43,7 @@ public class CommentService {
                 throw new IllegalArgumentException("삭제된 댓글에는 대댓글을 작성할 수 없습니다");
             }
         }
-        Comment comment = new Comment(user, post, content, parent);
+        Comment comment = new Comment(user, post, content, user.getNickname(), parent);
         commentRepository.save(comment);
         post.increaseCommentCount();
 
@@ -92,18 +94,31 @@ public class CommentService {
     }
 
     // 댓글 삭제
-    public Long delete(Long userId, Long commentId){
-        Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글이 존재하지 않습니다"));
-        // 작성자 검증
-        if(!comment.getUser().getId().equals(userId)){
-            throw new AccessDeniedException("권한이 없습니다");
+    public Long delete(Long userId, Long commentId, Authentication authentication){
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지않는 댓글입니다"));
+
+        boolean isOwner = comment.getUser().getId().equals(userId);
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if(!isOwner && !isAdmin){
+            throw new AccessDeniedException("삭제 권한이 없습니다");
         }
-        // 이미 삭제된 댓글이면 아무것도 안함
+
         if(!comment.isDeleted()){
             comment.softDelete();
             comment.getPost().decreaseCommentCount();
         }
-
+        System.out.println(authentication.getAuthorities());
+        System.out.println("userId: " + userId);
+        System.out.println("comment userId: " + comment.getUser().getId());
         return commentId;
+    }
+
+    // 내가 작성한 댓글 조회
+    @Transactional(readOnly = true)
+    public Page<MyCommentResponse> getMyComments(Long userId, Pageable pageable){
+        return commentRepository.findByUserIdAndDeletedFalse(userId, pageable).map(MyCommentResponse::from);
     }
 }

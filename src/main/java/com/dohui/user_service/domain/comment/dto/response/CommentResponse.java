@@ -30,7 +30,7 @@ public class CommentResponse {
                 .id(comment.getId())
                 .content(content)
                 .userId(comment.getUser().getId())
-                .username(comment.getUser().getNickname())
+                .username(comment.getUsername())
                 .createdAt(comment.getCreatedAt())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .deleted(comment.isDeleted())

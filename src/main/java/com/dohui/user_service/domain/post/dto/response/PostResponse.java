@@ -26,7 +26,7 @@ public class PostResponse {
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
-                post.getUser().getNickname(),
+                post.getUsername(),
                 post.getCreatedAt(),
                 post.getCommentCount(),
                 post.getLikeCount(),

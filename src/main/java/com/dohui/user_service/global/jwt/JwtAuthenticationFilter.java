@@ -7,14 +7,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -49,13 +52,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 토큰 파싱 (검증 포함)
             Claims claims = jwtProvider.parseClaims(token);
+
             String userId = claims.getSubject();
+            String role = claims.get("role", String.class);
+            System.out.println("🔥 role: " + role);
+
+            List<GrantedAuthority> authorities = List.of(
+                    new SimpleGrantedAuthority("ROLE_" + role)
+            );
+            System.out.println("🔥 authorities: " + authorities);
+
             // 인증 객체 생성
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userId,
                             null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                            authorities
                     );
             authentication.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(request)
