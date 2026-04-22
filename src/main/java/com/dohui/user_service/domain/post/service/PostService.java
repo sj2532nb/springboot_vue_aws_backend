@@ -95,7 +95,6 @@ public class PostService {
     }
 
     // 글 상세
-    @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(Long postId, Long userId) {
         Post post = postRepository.findByIdAndDeletedFalse(postId).orElseThrow(() -> new IllegalArgumentException("존재하지않는 글입니다"));
         post.increaseViewCount();  // 조회수 증가

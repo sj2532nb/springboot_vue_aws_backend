@@ -9,10 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -62,7 +64,7 @@ public class PostController {
             @PathVariable Long id,
             @AuthenticationPrincipal String userId
     ) {
-        Long uid = userId != null ? Long.valueOf(userId) : null;
+        Long uid = (userId != null && !userId.equals("anonymousUser")) ? Long.valueOf(userId) : null;
         return ResponseEntity.ok(postService.getPostDetail(id, uid));
     }
 
@@ -120,7 +122,7 @@ public class PostController {
             Pageable pageable,
             @AuthenticationPrincipal String userId
     ){
-        Long uid = userId != null ? Long.valueOf(userId) : null;
+        Long uid = (userId != null && !userId.equals("anonymousUser")) ? Long.valueOf(userId) : null;
         return postService.getPopularPosts(pageable, uid);
     }
 
@@ -131,7 +133,7 @@ public class PostController {
             Pageable pageable,
             @AuthenticationPrincipal String userId
     ){
-        Long uid = userId != null ? Long.valueOf(userId) : null;
+        Long uid = (userId != null && !userId.equals("anonymousUser")) ? Long.valueOf(userId) : null;
         return postService.getHotPosts(threshold, pageable, uid);
     }
 
@@ -142,6 +144,10 @@ public class PostController {
             Pageable pageable,
             Authentication authentication
     ){
+        // 비로그인 차단
+        if (authentication == null || authentication.getName().equals("anonymousUser")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
         Long userId = Long.valueOf(authentication.getName());
         return postService.getMyPosts(userId, pageable);
     }
@@ -154,7 +160,7 @@ public class PostController {
             Authentication authentication
     ){
         Long userId = null;
-        if (authentication != null){
+        if (authentication != null && !authentication.getName().equals("anonymousUser")){
             userId = Long.valueOf(authentication.getName());
         }
         return postService.getPreviousPosts(postId, userId, from);

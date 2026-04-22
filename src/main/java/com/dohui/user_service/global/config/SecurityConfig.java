@@ -49,10 +49,11 @@ public class SecurityConfig {
                                 "/api/s3/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/error"
                         ).permitAll()  // 인증없이 허용
                         .requestMatchers(HttpMethod.GET, "/api/posts/*/previous").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()  // 글 목록은 로그인 없이 허용
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()  // 글 목록은 로그인 없이 허용
                         .requestMatchers("/api/users/auth-test", "/api/users/**", "/api/posts/**", "/api/comments/**").hasAnyRole("USER", "ADMIN")  // 나머지 users, posts, comments는 로그인 필요
                         .anyRequest().authenticated()
                 )

@@ -2,6 +2,7 @@ package com.dohui.user_service.domain.post.controller;
 
 import com.dohui.user_service.domain.post.service.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
+@Profile("!test")
 @RequiredArgsConstructor
 @RequestMapping("/api/s3")
 public class S3Controller {

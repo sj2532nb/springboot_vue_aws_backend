@@ -32,7 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // swagger 관련 경로는 JWT 검사 없이 통과
         String uri = request.getRequestURI();
-        if(uri.startsWith("/v3/api-docs") || uri.startsWith("/swagger-ui")){
+
+        if (
+                uri.startsWith("/api/users/login") ||
+                uri.startsWith("/api/users/signup") ||
+                uri.startsWith("/v3/api-docs") ||
+                uri.startsWith("/swagger-ui")
+        ) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -55,12 +61,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
-            System.out.println("🔥 role: " + role);
 
             List<GrantedAuthority> authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + role)
             );
-            System.out.println("🔥 authorities: " + authorities);
 
             // 인증 객체 생성
             UsernamePasswordAuthenticationToken authentication =
@@ -69,9 +73,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             authorities
                     );
+
             authentication.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(request)
             );
+
             // SecurityContext에 등록
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {

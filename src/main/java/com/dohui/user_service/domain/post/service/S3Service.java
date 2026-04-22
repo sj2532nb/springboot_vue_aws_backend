@@ -2,6 +2,7 @@ package com.dohui.user_service.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class S3Service {
 

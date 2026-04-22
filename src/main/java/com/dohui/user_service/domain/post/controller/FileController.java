@@ -1,5 +1,6 @@
 package com.dohui.user_service.domain.post.controller;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
+@Profile("!test")
 @RequestMapping("/api/files")
 public class FileController {
     private final String uploadDir = "C:/upload/";
