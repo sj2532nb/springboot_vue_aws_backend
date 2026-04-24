@@ -2,6 +2,7 @@ package com.dohui.user_service.domain.post.dto.response;
 
 import com.dohui.user_service.domain.post.dto.entity.Post;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,6 +26,9 @@ public class PostDetailResponse {
 
     private List<AttachmentResponse> attachments;
 
+    @JsonProperty("isPrivate")
+    private boolean isPrivate;
+
     public static PostDetailResponse from(
             Post post,
             int likeCount,
@@ -47,6 +51,7 @@ public class PostDetailResponse {
                 .liked(liked)
                 .viewCount(post.getViewCount())
                 .attachments(attachments)
+                .isPrivate(post.isPrivate())
                 .build();
     }
 }

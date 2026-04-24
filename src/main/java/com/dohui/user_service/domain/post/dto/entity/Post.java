@@ -48,13 +48,17 @@ public class Post extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments = new ArrayList<>();
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isPrivate = false;
+
     @Builder
-    public Post(User user, String title, String content, String username) {
+    public Post(User user, String title, String content, String username, boolean isPrivate) {
         this.user = user;
         this.title = title;
         this.content = content;
         this.username = username;
         this.commentCount = 0;
+        this.isPrivate = isPrivate;
     }
 
     public void update(String title, String content) {

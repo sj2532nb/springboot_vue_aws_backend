@@ -28,4 +28,8 @@ public class PostSpecs {
                 cb.like(cb.lower(root.get("content")), "%" + keyword.toLowerCase() + "%")
         );
     }
+
+    public static Specification<Post> isPublic() {
+        return (root, query, cb) -> cb.isFalse(root.get("isPrivate"));
+    }
 }

@@ -1,6 +1,7 @@
 package com.dohui.user_service.domain.post.dto.response;
 
 import com.dohui.user_service.domain.post.dto.entity.Post;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,6 +20,9 @@ public class PostResponse {
     private int viewCount;
     private boolean author;
 
+    @JsonProperty("isPrivate")
+    private boolean isPrivate;
+
     public static PostResponse from(Post post, Long uid){
         boolean author = uid != null && post.getUser().getId().equals(uid);
 
@@ -31,7 +35,8 @@ public class PostResponse {
                 post.getCommentCount(),
                 post.getLikeCount(),
                 post.getViewCount(),
-                author
+                author,
+                post.isPrivate()
         );
     }
 }

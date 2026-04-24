@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,8 +28,7 @@ public class PostController {
     // 글 작성
     @PostMapping
     public Long create(
-            @RequestBody
-            PostRequest request,
+            @RequestBody PostRequest request,
             Authentication authentication
     ) {
         Long userId = Long.valueOf(authentication.getName());
@@ -37,7 +37,8 @@ public class PostController {
                 request.getTitle(),
                 request.getContent(),
                 request.getFileNames(),
-                request.getFileUrls()
+                request.getFileUrls(),
+                request.isPrivate()
         );
     }
 
@@ -164,5 +165,29 @@ public class PostController {
             userId = Long.valueOf(authentication.getName());
         }
         return postService.getPreviousPosts(postId, userId, from);
+    }
+
+    // 비공개 글 목록
+    @GetMapping("/private")
+    public Page<PostResponse> getPrivatePosts(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().equals("anonymousUser")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        Long userId = Long.valueOf(authentication.getName());
+        return postService.getPrivatePosts(userId, pageable);
+    }
+
+    // 이전 글, 다음 글 버튼
+    @GetMapping("/{id}/adjacent/private")
+    public Map<String, Long> getPrivateAdjacentPosts(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        Long userId = Long.valueOf(authentication.getName());
+        return postService.getPrivateAdjacentPosts(id, userId);
     }
 }

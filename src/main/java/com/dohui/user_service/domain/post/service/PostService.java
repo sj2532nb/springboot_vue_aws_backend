@@ -24,7 +24,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +39,7 @@ public class PostService {
     private final AttachmentRepository attachmentRepository;
 
     // 글 작성
-    public Long create(Long userId, String title, String content, List<String> fileNames, List<String> fileUrls) {
+    public Long create(Long userId, String title, String content, List<String> fileNames, List<String> fileUrls, boolean isPrivate) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
         Post post = Post.builder()
@@ -45,6 +47,7 @@ public class PostService {
                 .title(title)
                 .content(content)
                 .username(user.getNickname())
+                .isPrivate(isPrivate)
                 .build();
 
         postRepository.save(post);
@@ -73,7 +76,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> findAll(String keyword, String type, Pageable pageable, Long userId) {
 
-        Specification<Post> spec = PostSpecs.notDeleted();
+        Specification<Post> spec = PostSpecs.notDeleted().and(PostSpecs.isPublic());
 
         if (keyword != null && !keyword.isBlank()) {
             String[] keywords = keyword.trim().split("\\s+");
@@ -97,9 +100,18 @@ public class PostService {
     // 글 상세
     public PostDetailResponse getPostDetail(Long postId, Long userId) {
         Post post = postRepository.findByIdAndDeletedFalse(postId).orElseThrow(() -> new IllegalArgumentException("존재하지않는 글입니다"));
+
+        // 비공개 글에 다른 유저가 접근했을 때 권한 체크
+        if (post.isPrivate()) {
+            if (userId == null || !post.getUser().getId().equals(userId)) {
+                throw new AccessDeniedException("접근 권한이 없습니다");
+            }
+        }
+
         post.increaseViewCount();  // 조회수 증가
 
         boolean liked = false;
+
         if (userId != null) {
             User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("존재하지않는 유저입니다"));
             liked = postLikeRepository.existsByUserAndPost(user, post);
@@ -185,14 +197,14 @@ public class PostService {
     // 추천순 정렬
     @Transactional(readOnly = true)
     public Page<PostResponse> getPopularPosts(Pageable pageable, Long userId){
-        return postRepository.findByDeletedFalseOrderByLikeCountDescCreatedAtDesc(pageable)
+        return postRepository.findByDeletedFalseAndIsPrivateFalseOrderByLikeCountDescCreatedAtDesc(pageable)
                 .map(post -> PostResponse.from(post, userId));
     }
 
     // 인기 게시판
     @Transactional(readOnly = true)
     public Page<PostResponse> getHotPosts(int threshold, Pageable pageable, Long userId){
-        return postRepository.findByDeletedFalseAndLikeCountGreaterThanEqualOrderByCreatedAtDesc(threshold, pageable)
+        return postRepository.findByDeletedFalseAndIsPrivateFalseAndLikeCountGreaterThanEqualOrderByCreatedAtDesc(threshold, pageable)
                 .map(post -> PostResponse.from(post, userId));
     }
 
@@ -209,9 +221,33 @@ public class PostService {
         if("hot".equals(from)){
             posts = postRepository.findPreviousHotPosts(postId, 10);
         }
+        else if("private".equals(from)){
+            posts = postRepository.findPreviousPrivatePosts(postId, userId);
+        }
         else{
-            posts = postRepository.findTop5ByIdLessThanAndDeletedFalseOrderByIdDesc(postId);
+            posts = postRepository.findTop5ByIdLessThanAndDeletedFalseAndIsPrivateFalseOrderByIdDesc(postId);
         }
         return posts.stream().map(post -> PostResponse.from(post, userId)).toList();
+    }
+
+    // 비공개 글 목록
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getPrivatePosts(Long userId, Pageable pageable) {
+        return postRepository.findByUserIdAndIsPrivateTrueAndDeletedFalse(userId, pageable)
+                .map(post -> PostResponse.from(post, userId));
+    }
+
+    // 이전 글, 다음 글 버튼
+    @Transactional(readOnly = true)
+    public Map<String, Long> getPrivateAdjacentPosts(Long postId, Long userId) {
+        Map<String, Long> result = new HashMap<>();
+
+        postRepository.findFirstByUserIdAndIsPrivateTrueAndDeletedFalseAndIdLessThanOrderByIdDesc(userId, postId)
+                .ifPresent(p -> result.put("prevId", p.getId()));
+
+        postRepository.findFirstByUserIdAndIsPrivateTrueAndDeletedFalseAndIdGreaterThanOrderByIdAsc(userId, postId)
+                .ifPresent(p -> result.put("nextId", p.getId()));
+
+        return result;
     }
 }

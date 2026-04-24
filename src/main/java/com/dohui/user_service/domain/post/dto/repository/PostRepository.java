@@ -29,10 +29,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     );
 
     @EntityGraph(attributePaths = "user")
-    Page<Post> findByDeletedFalseOrderByLikeCountDescCreatedAtDesc(Pageable pageable);
+    Page<Post> findByDeletedFalseAndIsPrivateFalseOrderByLikeCountDescCreatedAtDesc(Pageable pageable);
 
     @EntityGraph(attributePaths = "user")
-    Page<Post> findByDeletedFalseAndLikeCountGreaterThanEqualOrderByCreatedAtDesc(
+    Page<Post> findByDeletedFalseAndIsPrivateFalseAndLikeCountGreaterThanEqualOrderByCreatedAtDesc(
             int likeCount,
             Pageable pageable
     );
@@ -40,13 +40,16 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @EntityGraph(attributePaths = "user")
     Page<Post> findByUserIdAndDeletedFalse(Long userId, Pageable pageable);
 
+    // 이전 글 목록
     @EntityGraph(attributePaths = "user")
-    List<Post> findTop5ByIdLessThanAndDeletedFalseOrderByIdDesc(Long postId);
+    List<Post> findTop5ByIdLessThanAndDeletedFalseAndIsPrivateFalseOrderByIdDesc(Long postId);
 
+    // 인기글 이전 글 목록
     @Query("""
             SELECT p FROM Post p
             WHERE p.id < :postId
             AND p.deleted = false
+            AND p.isPrivate = false
             AND p.likeCount >= :threshold
             ORDER BY p.id DESC
             """)
@@ -54,4 +57,29 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             @Param("postId") Long postId,
             @Param("threshold") int threshold
     );
+
+    // 비공개 글 목록
+    @EntityGraph(attributePaths = "user")
+    Page<Post> findByUserIdAndIsPrivateTrueAndDeletedFalse(Long userId, Pageable pageable);
+
+    // 비공개 글 이전 글 목록
+    @Query("""
+            SELECT p FROM Post p
+            WHERE p.id < :postId
+            AND p.deleted = false
+            AND p.isPrivate = true
+            AND p.user.id >= :userId
+            ORDER BY p.id DESC
+            LIMIT 5
+            """)
+    List<Post> findPreviousPrivatePosts(
+            @Param("postId") Long postId,
+            @Param("userId") Long userId
+    );
+
+    // 이전 글 (id가 작은 것 중 가장 큰 것)
+    Optional<Post> findFirstByUserIdAndIsPrivateTrueAndDeletedFalseAndIdLessThanOrderByIdDesc(Long userId, Long id);
+
+    // 다음 글 (id가 큰 것 중 가장 작은 것)
+    Optional<Post> findFirstByUserIdAndIsPrivateTrueAndDeletedFalseAndIdGreaterThanOrderByIdAsc(Long userId, Long id);
 }

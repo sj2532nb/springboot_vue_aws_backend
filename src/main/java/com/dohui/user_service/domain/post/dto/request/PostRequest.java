@@ -1,5 +1,6 @@
 package com.dohui.user_service.domain.post.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,4 +12,7 @@ public class PostRequest {
 
     private List<String> fileNames;
     private List<String> fileUrls;
+
+    @JsonProperty("isPrivate")
+    private boolean isPrivate = false;
 }
